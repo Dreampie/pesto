@@ -3,6 +3,8 @@ Python ORM and Utils
 
 python下的极简orm框架，核心思想，领域对象+仓库
 
+地址：https://github.com/Dreampie/pesto
+
 领域对象：领域模型对应的属性和行为
 
 仓库：批量操作领域对象，或者特殊的一些数据操作逻辑
