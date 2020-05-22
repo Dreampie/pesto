@@ -8,8 +8,10 @@ python下的极简orm框架，核心思想，领域对象+仓库
 
 只需要配置数据库相关的参数，通过领域模型，或者仓库即可操作数据，简单易用，业务逻辑复杂可以加入领域服务概念
 
+示例：
 pesto-example(flask + pesto-orm)
-  
+build in python 3.6
+
 add dependencies in requirements(重要):
 ```text
 pesto-orm==0.0.1
@@ -23,7 +25,7 @@ add config in config.ini(重要):
 app.key = pesto-orm
 log.path = /opt/logs/pesto-orm/pesto-orm.log
 log.level = INFO
-; db config
+; db config 目前只支持mysql，欢迎提交其他数据库的实现
 db.database = example
 db.raise_on_warnings = True
 db.charset = utf8mb4
@@ -50,7 +52,7 @@ run with env(default is local, dev, test, prod)
 env=$ENV python ./pesto_example/main.py >> std_out.log 2>&1
 ```
 
-main 
+main 示例example，可以直接执行main方法启动(需先执行数据库的创建，以及配置数据的相关信息)
 ```python
 @app.route('/')
 def index():
