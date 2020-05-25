@@ -5,6 +5,56 @@ python下的极简orm框架，核心思想，领域对象+仓库
 
 地址：https://github.com/Dreampie/pesto
 
+特色：
+
+1、自动化的模型结构映射，不需要复杂的创建数据模型和数据库表结构直接的映射信息，只需要一个简单的继承就可以实现属性自动映射
+```python
+class Example(MysqlBaseModel):
+    def __init__(self):
+        super(Example, self).__init__(table_name='example')
+        
+#使用
+example= Example()
+...
+example.save() #对象的增删改查 轻松实现
+
+```
+
+2、超轻量级的配置初始化，只需要在 config.ini 配置对应的数据库信息，自动初始化连接，随时随地的执行sql
+
+3、简单实用的日志工具
+```python
+# 配置 config.ini
+log.path = /opt/logs/pesto-orm/pesto-orm.log
+log.level = INFO
+
+# 使用简单
+logger = LoggerFactory.get_logger('dialect.mysql.domain')
+
+```
+
+4、支持数据库事务
+```python
+#一个注解告别，python下的事务烦恼
+@transaction()
+def methodX():
+    pass
+
+```
+
+5、环境隔离的参数配置工具 config.ini, 公共参数放default，定制参数放在各自的环境
+```python
+[default]
+
+[dev]
+
+[test]
+
+[prod]
+```
+
+6、等等
+
 领域对象：领域模型对应的属性和行为
 
 仓库：批量操作领域对象，或者特殊的一些数据操作逻辑
