@@ -5,7 +5,7 @@ python下的极简orm框架，核心思想，领域对象+仓库
 
 地址：https://github.com/Dreampie/pesto
 
-特色：
+1、特色
 ---
 
 1、自动化的模型结构映射，不需要复杂的创建数据模型和数据库表结构直接的映射信息，只需要一个简单的继承就可以实现属性自动映射
@@ -56,7 +56,7 @@ def methodX():
 
 6、等等
 
-结构：
+2、结构
 ---
 
 领域对象：领域模型对应的属性和行为
@@ -67,7 +67,7 @@ def methodX():
 
 只需要配置数据库相关的参数，通过领域模型，或者仓库即可操作数据，简单易用，业务逻辑复杂可以加入领域服务概念
 
-示例：
+3、示例
 ---
 
 pesto-example(flask + pesto-orm)
@@ -230,7 +230,7 @@ create table example(
     )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
-测试
+4、测试
 ---
 ```bash
 # 查询全部数据
