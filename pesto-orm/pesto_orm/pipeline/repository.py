@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 # encoding: utf-8
-from pesto_common.pipeline.step import PipelineStep
 from pesto_orm.dialect.mysql.repository import MysqlBaseRepository
+
+from pesto_common.pipeline.step import PipelineStep
 
 
 class MysqlPipelineRepository(PipelineStep, MysqlBaseRepository):

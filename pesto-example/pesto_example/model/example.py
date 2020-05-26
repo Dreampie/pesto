@@ -1,4 +1,4 @@
-from pesto_orm.dialect.mysql.model import MysqlBaseModel
+from pesto_orm.dialect.mysql.domain import MysqlBaseModel
 
 
 class Example(MysqlBaseModel):

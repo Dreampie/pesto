@@ -3,7 +3,7 @@
 
 from setuptools import setup, find_packages
 
-requirements = ['pesto-common==0.0.1']
+requirements = ['pesto-common==0.0.3']
 
 setup(name='pesto-orm',
       version='0.0.3',

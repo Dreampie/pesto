@@ -1,171 +1,125 @@
-# -*- coding:utf8 -*-
 import sys
 import threading
-from enum import Enum
+from abc import ABCMeta
 
-import mysql.connector
-import mysql.connector.cursor
-import mysql.connector.pooling
-from mysql.connector.conversion import MySQLConverter
-
-from pesto_common.config.configer import Configer
 from pesto_common.log.logger_factory import LoggerFactory
-from pesto_orm.error import reraise, DBError
+from pesto_orm.core.base import ExecuteMode, CursorMode
+from pesto_orm.core.error import DBErrorType, DBError, reraise
+from pesto_orm.db.pool import ConnectionPool
 
-logger = LoggerFactory.get_logger('dialect.mysql.factory')
-
-
-class ExecuteMode(Enum):
-    ONE_MODE = 0
-    MANY_MODE = 1
+logger = LoggerFactory.get_logger('core.executor')
 
 
-class ResultMode(Enum):
-    STORE_RESULT_MODE = 0
-    USE_RESULT_MODE = 1
+class Executor(object):
+    __metaclass__ = ABCMeta
 
-
-class CursorMode(Enum):
-    CURSOR_MODE = 0
-    DICT_CURSOR_MODE = 1
-
-
-class NumpyMySQLConverter(MySQLConverter):
-    """ A mysql.connector Converter that handles Numpy types """
-
-    def _float32_to_mysql(self, value):
-        return float(value)
-
-    def _float64_to_mysql(self, value):
-        return float(value)
-
-    def _int32_to_mysql(self, value):
-        return int(value)
-
-    def _int64_to_mysql(self, value):
-        return int(value)
-
-
-class MysqlExecutor(object):
-    """
-    Mysql sql 执行工具
-    """
-
-    def __init__(self, mysql_connection_pool, show_sql=False):
-        self.__mysql_connection_pool = mysql_connection_pool
+    def __init__(self, pool, show_sql=False):
+        self.__pool = pool
         self.__show_sql = show_sql
 
-        # 保留本地connection
-        self.__local_connection = threading.local()
-        self.__local_connection.mysql_connection = None
-        self.__local_connection.use_transaction = False
+        # 保留本地conn
+        self.__local_conn = threading.local()
+        self.__local_conn.conn = None
+        self.__local_conn.use_transaction = False
 
-    def close(self):
-        self.__close_connection()
-        self.__local_connection = None
-        self.__mysql_connection_pool = None
+    def show_sql(self, sql, params=None):
+        if isinstance(params, list) and isinstance(params[0], tuple):
+            log_params = params[:5]
+            logger.info('Execute sql: {}, params(top5): \n{}'.format(sql, ', \n'.join([str(param_tuple) for param_tuple in log_params])))
+        else:
+            logger.info('Execute sql: {}, params: {}'.format(sql, params))
 
     def set_database(self, database):
-        self.__mysql_connection_pool.set_config(**{"database": database})
+        self.__pool.set_config(**{'database': database})
 
     def __has_connection(self):
-        return hasattr(self.__local_connection, "mysql_connection") and self.__local_connection.mysql_connection is not None
+        return hasattr(self.__local_conn, 'conn') and self.__local_conn.conn is not None
 
     def __has_transaction(self):
-        return hasattr(self.__local_connection, "use_transaction") and self.__local_connection.use_transaction
+        return hasattr(self.__local_conn, 'use_transaction') and self.__local_conn.use_transaction
 
     def __get_connection(self):
-        """
+        '''
         获取一个连接
-        """
+        '''
         if self.__has_connection():
-            connection = self.__local_connection.mysql_connection
+            conn = self.__local_conn.conn
         else:
-            connection = self.__mysql_connection_pool.get_connection()
-            self.__local_connection.mysql_connection = connection
+            conn = self.__pool.get_connection()
+            self.__local_conn.conn = conn
 
-        if not connection.is_connected():
-            raise DBError(key=DBErrorType.NOT_CONNECT_ERROR, message="Connection is not connect.")
+        if not conn.is_connected():
+            raise DBError(key=DBErrorType.NOT_CONNECT_ERROR, message='Connection is not connect.')
 
         if self.__has_transaction():
-            connection.autocommit = False
+            conn.autocommit = False
         else:
-            connection.autocommit = True
+            conn.autocommit = True
 
-        logger.debug('Connection autocommit: {}'.format(connection.autocommit))
-        return connection
+        logger.debug('Connection autocommit: {}'.format(conn.autocommit))
+        return conn
 
     def __commit_connection(self):
-        """
+        '''
         关闭当前连接
-        """
+        '''
         if self.__has_connection() and not self.__has_transaction():
-            self.__local_connection.mysql_connection.commit()
+            self.__local_conn.conn.commit()
 
     def __close_connection(self):
-        """
+        '''
         关闭当前连接
-        """
+        '''
         if self.__has_connection() and not self.__has_transaction():
-            self.__local_connection.mysql_connection.close()
-            self.__local_connection.mysql_connection = None
-            self.__local_connection.use_transaction = False
+            self.__local_conn.conn.close()
+            self.__local_conn.conn = None
+            self.__local_conn.use_transaction = False
 
     def begin_transaction(self):
-        self.__local_connection.use_transaction = True
+        self.__local_conn.use_transaction = True
+        self.__local_conn.conn.begin()
 
     def commit_transaction(self):
         if self.__has_connection():
-            self.__local_connection.mysql_connection.commit()
+            self.__local_conn.conn.commit()
 
     def rollback_transaction(self):
         if self.__has_connection():
-            self.__local_connection.mysql_connection.rollback()
+            self.__local_conn.conn.rollback()
 
     def close_transaction(self):
         if self.__has_connection():
-            self.__local_connection.mysql_connection.close()
-            self.__local_connection.mysql_connection = None
-            self.__local_connection.use_transaction = False
+            self.__local_conn.conn.close()
+            self.__local_conn.conn = None
+            self.__local_conn.use_transaction = False
 
     def __execute(self, sql, params=None, execute_mode=ExecuteMode.ONE_MODE, cursor_mode=CursorMode.CURSOR_MODE):
-        """
+        '''
         通用sql执行工具
-        """
+        '''
         if self.__show_sql:
-            if isinstance(params, list):
-                log_params = params[:5]
-                logger.info("Execute Sql: {}, params(top5): \n{}".format(sql, ', \n'.join([str(param_tuple) for param_tuple in log_params])))
-            else:
-                logger.info("Execute Sql: {}, params: {}".format(sql, params))
+            self.show_sql(sql=sql, params=params)
 
         conn = self.__get_connection()
-        if cursor_mode == CursorMode.CURSOR_MODE:
-            cursor_class = mysql.connector.cursor.MySQLCursor
-        elif cursor_mode == CursorMode.DICT_CURSOR_MODE:
-            cursor_class = mysql.connector.cursor.MySQLCursorDict
-        else:
-            raise DBError(key=DBErrorType.CURSOR_MODE_ERROR, message="Cursor mode value is wrong.")
-
-        cursor = conn.cursor(buffered=True, raw=None, prepared=True, cursor_class=cursor_class)
+        cursor = conn.cursor()
 
         if execute_mode == ExecuteMode.ONE_MODE:
             cursor.execute(sql, params)
         else:
             cursor.executemany(sql, params)
 
-        return {"conn": conn, "cursor": cursor}
+        return {'conn': conn, 'cursor': cursor}
 
     def execute(self, sql, params=None, execute_mode=ExecuteMode.ONE_MODE, cursor_mode=CursorMode.CURSOR_MODE):
         if sql.upper().startswith('INSERT') | sql.upper().startswith('SELECT') | sql.upper().startswith('UPDATE') | sql.upper().startswith('DELETE'):
-            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message="Not support this operate")
+            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message='Not support this operate')
 
         conn = None
         cursor = None
         try:
             execute_result = self.__execute(sql=sql, params=params, execute_mode=execute_mode, cursor_mode=cursor_mode)
-            conn = execute_result["conn"]
-            cursor = execute_result["cursor"]
+            conn = execute_result['conn']
+            cursor = execute_result['cursor']
 
             self.__commit_connection()
             return True
@@ -183,14 +137,14 @@ class MysqlExecutor(object):
 
         if sql.upper().startswith('DROP') | sql.upper().startswith('CREATE') | sql.upper().startswith('SELECT') | sql.upper().startswith('UPDATE') | sql.upper().startswith(
                 'DELETE'):
-            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message="Not support this operate")
+            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message='Not support this operate')
 
         conn = None
         cursor = None
         try:
             insert_result = self.__execute(sql=sql, params=params, execute_mode=execute_mode, cursor_mode=cursor_mode)
-            conn = insert_result["conn"]
-            cursor = insert_result["cursor"]
+            conn = insert_result['conn']
+            cursor = insert_result['cursor']
             rowcount = cursor.rowcount
 
             if execute_mode == ExecuteMode.ONE_MODE:
@@ -214,14 +168,14 @@ class MysqlExecutor(object):
 
         if sql.upper().startswith('DROP') | sql.upper().startswith('CREATE') | sql.upper().startswith('INSERT') | sql.upper().startswith('UPDATE') | sql.upper().startswith(
                 'DELETE'):
-            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message="Not support this operate")
+            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message='Not support this operate')
 
         conn = None
         cursor = None
         try:
             select_result = self.__execute(sql=sql, params=params, cursor_mode=cursor_mode)
-            conn = select_result["conn"]
-            cursor = select_result["cursor"]
+            conn = select_result['conn']
+            cursor = select_result['cursor']
 
             result = {}
             column_values = cursor.fetchone()
@@ -245,14 +199,14 @@ class MysqlExecutor(object):
 
         if sql.upper().startswith('DROP') | sql.upper().startswith('CREATE') | sql.upper().startswith('INSERT') | sql.upper().startswith('UPDATE') | sql.upper().startswith(
                 'DELETE'):
-            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message="Not support this operate")
+            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message='Not support this operate')
 
         conn = None
         cursor = None
         try:
             select_result = self.__execute(sql=sql, params=params, cursor_mode=cursor_mode)
-            conn = select_result["conn"]
-            cursor = select_result["cursor"]
+            conn = select_result['conn']
+            cursor = select_result['cursor']
 
             result = []
             column_values = cursor.fetchall()
@@ -280,14 +234,14 @@ class MysqlExecutor(object):
 
         if sql.upper().startswith('DROP') | sql.upper().startswith('CREATE') | sql.upper().startswith('INSERT') | sql.upper().startswith('SELECT') | sql.upper().startswith(
                 'DELETE'):
-            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message="Not support this operate")
+            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message='Not support this operate')
 
         conn = None
         cursor = None
         try:
             update_result = self.__execute(sql=sql, params=params, cursor_mode=cursor_mode)
-            conn = update_result["conn"]
-            cursor = update_result["cursor"]
+            conn = update_result['conn']
+            cursor = update_result['cursor']
 
             self.__commit_connection()
             return cursor.rowcount
@@ -305,14 +259,14 @@ class MysqlExecutor(object):
 
         if sql.upper().startswith('DROP') | sql.upper().startswith('CREATE') | sql.upper().startswith('INSERT') | sql.upper().startswith('SELECT') | sql.upper().startswith(
                 'UPDATE'):
-            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message="Not support this operate")
+            raise DBError(key=DBErrorType.OPERATE_NOT_SUPPORT_ERROR, message='Not support this operate')
 
         conn = None
         cursor = None
         try:
             delete_result = self.__execute(sql=sql, params=params, cursor_mode=cursor_mode)
-            conn = delete_result["conn"]
-            cursor = delete_result["cursor"]
+            conn = delete_result['conn']
+            cursor = delete_result['cursor']
 
             self.__commit_connection()
             return cursor.rowcount
@@ -326,19 +280,19 @@ class MysqlExecutor(object):
             if conn:
                 self.__close_connection()
 
-
-class DBErrorType(Enum):
-    NOT_CONNECT_ERROR = 100001
-    CURSOR_MODE_ERROR = 100002
-    OPERATE_NOT_SUPPORT_ERROR = 100003
-    SQL_BUILD_ERROR = 100004
+    def close(self):
+        self.__pool.close()
+        self.__local_conn = None
+        self.__pool = None
 
 
-class MysqlFactory(object):
-    """
-    Mysql 连接池管理器
-    """
-    __db_connection_pools = {str: MysqlExecutor}
+class ExecutorFactory(object):
+    '''
+    连接池管理器
+    '''
+
+    __connection_pools = {}
+    __lock = threading.Condition()
 
     def __init__(self):
         pass
@@ -346,36 +300,43 @@ class MysqlFactory(object):
     @staticmethod
     def __get_pool_key(db_config):
         if 'database' not in db_config:
-            key = db_config['host'] + ":" + str(db_config['port']) + ":" + 'None'
+            key = db_config['host'] + ':' + str(db_config['port']) + ':' + 'None'
         else:
-            key = db_config['host'] + ":" + str(db_config['port']) + ":" + db_config['database']
+            key = db_config['host'] + ':' + str(db_config['port']) + ':' + db_config['database']
         return key
 
     @staticmethod
-    def get_executor(db_config, pool_name="mysql-pool", pool_size=32, pool_reset_session=True):
-        key = MysqlFactory.__get_pool_key(db_config)
+    def get_executor(db_config):
+        key = ExecutorFactory.__get_pool_key(db_config)
 
-        try:
-            return MysqlFactory.__db_connection_pools[key]
-        except KeyError:
+        if key not in ExecutorFactory.__connection_pools:
+            ExecutorFactory.__lock.acquire()
             try:
                 _db_config = db_config.copy()
                 if 'password' in _db_config:
                     _db_config['password'] = '******'
                 logger.info(
-                    "Init mysql pool info - name: " + pool_name + ", size: " + str(pool_size) + ", reset session: " + str(pool_reset_session) + ", dbconfig: " + str(_db_config))
-                __mysql_connection_pool = mysql.connector.pooling.MySQLConnectionPool(pool_name=pool_name, pool_size=pool_size, pool_reset_session=pool_reset_session, **db_config)
-                MysqlFactory.__db_connection_pools[key] = MysqlExecutor(__mysql_connection_pool, True if Configer.get("db.show_sql") == "True" else False)
+                    'Init mysql pool info -  db config: %s' % str(_db_config))
+                target = db_config['target']
+                del db_config['target']
+                show_sql = db_config['show_sql']
+                del db_config['show_sql']
+                pool = ConnectionPool(target=target, **db_config)
+
+                ExecutorFactory.__connection_pools[key] = Executor(pool=pool, show_sql=show_sql)
+                ExecutorFactory.__lock.notifyAll()
             except Exception as e:
-                raise DBError(e)
-            return MysqlFactory.__db_connection_pools[key]
+                reraise(DBError(e), sys.exc_info()[2])
+            finally:
+                ExecutorFactory.__lock.release()
+        return ExecutorFactory.__connection_pools[key]
 
     @staticmethod
     def remove_executor(db_config):
-        key = MysqlFactory.__get_pool_key(db_config)
+        key = ExecutorFactory.__get_pool_key(db_config)
         try:
-            MysqlFactory.__db_connection_pools[key].close()
-            del MysqlFactory.__db_connection_pools[key]
+            ExecutorFactory.__connection_pools[key].close()
+            del ExecutorFactory.__connection_pools[key]
         except KeyError:
             pass
         return True

@@ -1,2 +1,2 @@
 mysql-connector-python==8.0.11
-pesto-common==0.0.1
+pesto-common==0.0.3

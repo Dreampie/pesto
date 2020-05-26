@@ -1,5 +1,5 @@
 from pesto_example.model.example import Example
-from pesto_orm.dialect.mysql.repository import MysqlBaseRepository
+from pesto_orm.dialect.mysql.domain import MysqlBaseRepository
 
 
 class ExampleRepository(MysqlBaseRepository):

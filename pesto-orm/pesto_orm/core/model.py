@@ -20,7 +20,7 @@ _default.default = JSONEncoder().default
 JSONEncoder.default = _default
 
 
-class BaseModel(object):
+class Model(object):
     __metaclass__ = ABCMeta
 
     def __init__(self, exclude_attrs=[], renames={}, init_attrs={}):
@@ -29,8 +29,8 @@ class BaseModel(object):
         :param exclude_attrs: 不作为对象属性的值，比如：orm中的table_name 等一些meta信息
         :param renames: 属性重命名，原本 a=5，可以重命名为 b=5, 用于纠正一些原生对象的不规范属性名称
         '''
-        exclude_attrs.append("_attrs")
-        exclude_attrs.append("_renames")
+        exclude_attrs.append('_attrs')
+        exclude_attrs.append('_renames')
 
         news_exclude_attrs = list(set(exclude_attrs))
         news_exclude_attrs.sort(key=exclude_attrs.index)
@@ -42,9 +42,9 @@ class BaseModel(object):
 
     def __getattr__(self, key):
         if key.startswith('__') and key.endswith('__'):
-            return super(BaseModel, self).__getattribute__(key)
+            return super(Model, self).__getattribute__(key)
 
-        if key == "_exclude_attrs" or key in self.__dict__["_exclude_attrs"]:
+        if key == '_exclude_attrs' or key in self.__dict__['_exclude_attrs']:
             if key not in self.__dict__:
                 raise AttributeError('attr \'%s\' not exist' % key)
             return self.__dict__[key]
@@ -53,9 +53,9 @@ class BaseModel(object):
 
     def __setattr__(self, key, value):
         if key.startswith('__') and key.endswith('__'):
-            return super(BaseModel, self).__setattr__(key)
+            return super(Model, self).__setattr__(key)
 
-        if key == "_exclude_attrs" or key in self.__dict__["_exclude_attrs"]:
+        if key == '_exclude_attrs' or key in self.__dict__['_exclude_attrs']:
             self.__dict__[key] = value
         else:
             try:
@@ -102,68 +102,61 @@ class BaseModel(object):
                 pass
         self._attrs.update(attrs)
 
-    """
-    封装save的语句
-    """
 
-    def _assembly_save(self):
-        value_holders = []
-        columns = []
-        values = []
-        attrs = self.get_attrs()
-        for column in attrs:
-            if column != self.primary_key:
-                value_holders.append("%s")
-                columns.append("`" + column + "`")
-                values.append(attrs[column])
-        separator = ", "
-        return separator, columns, value_holders, values
+class BaseModel(Model):
 
-    """
-    封装update的语句
-    """
-
-    def _assembly_update(self):
-        set_holders = []
-        values = []
-        attrs = self.get_attrs()
-        for column in attrs:
-            if column != self.primary_key:
-                set_holders.append("`" + column + "`= %s")
-                values.append(attrs[column])
-
-        values.append(attrs[self.primary_key])
-        separator = ", "
-        return separator, set_holders, values
-
-    """
-    保存当前对象
-    """
+    def __init__(self, db_name=None, table_name=None, table_alias=None, primary_key='id'):
+        super(BaseModel, self).__init__(['db_name', 'table_name', 'table_alias', 'primary_key'])
+        self.db_name = db_name
+        self.table_name = table_name
+        self.table_alias = table_alias
+        self.primary_key = primary_key
 
     @abstractmethod
+    def get_dialect(self):
+        raise NotImplementedError
+
+    @abstractmethod
+    def get_executor(self):
+        raise NotImplementedError
+
     def save(self):
-        raise NotImplementedError
+        attrs = self.get_attrs()
+        columns = [column for column in attrs.keys() if column != self.primary_key]
+        params = [attrs[column] for column in columns]
+        sql = self.get_dialect().insert(columns=columns, table=self.table_name, primary_key=self.primary_key, sequence=self.sequence)
+        primary_value = self.get_executor().insert(sql=sql, params=tuple(params))
+        self.set_attr(self.primary_key, primary_value)
+        return primary_value
 
-    """
+    '''
     根据主键更新单个对象
-    """
+    '''
 
-    @abstractmethod
     def update(self):
-        raise NotImplementedError
+        attrs = self.get_attrs()
+        columns = [column for column in attrs.keys() if column != self.primary_key]
+        params = [attrs[column] for column in columns]
+        params.append(attrs[self.primary_key])
+        sql = self.get_dialect().update(columns=columns, table=self.table_name, alias=self.table_alias, where='`%s`= %s' % (self.primary_key, '%s'))
+        return self.get_executor().update(sql=sql, params=tuple(params))
 
-    """
+    '''
     根据主键删除单个对象
-    """
+    '''
 
-    @abstractmethod
     def delete(self):
-        raise NotImplementedError
+        sql = self.get_dialect().delete(table=self.table_name, where='`%s`= %s' % (self.primary_key, '%s'))
+        return self.get_executor().delete(sql, tuple([self.get_attr(self.primary_key)]))
 
-    """
-    根据主键查询单个对象
-    """
+        '''
+        根据主键查询单个对象
+        '''
 
-    @abstractmethod
     def query(self):
-        raise NotImplementedError
+        sql = self.get_dialect().select(columns=['*'], table=self.table_name, alias=self.table_alias, where='`%s`= %s' % (self.primary_key, '%s'))
+        result = self.get_executor().select_first(sql=sql, params=tuple([self.get_attr(self.primary_key)]))
+
+        self.clear_attrs()
+        self.set_attrs(result.copy())
+        return self

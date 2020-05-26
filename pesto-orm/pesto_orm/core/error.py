@@ -1,4 +1,6 @@
 # -*- coding:utf8 -*-
+from enum import Enum
+
 
 def reraise(exception, traceback=None):
     if exception.__traceback__ is not traceback:
@@ -7,10 +9,17 @@ def reraise(exception, traceback=None):
         raise exception
 
 
+class DBErrorType(Enum):
+    NOT_CONNECT_ERROR = 100001
+    CURSOR_MODE_ERROR = 100002
+    OPERATE_NOT_SUPPORT_ERROR = 100003
+    SQL_BUILD_ERROR = 100004
+
+
 class BaseError(Exception):
-    """
+    '''
     数据库相关异常
-    """
+    '''
 
     def __init__(self, cause=None, key=None, message=None, sql=None, params=None):
         self.cause = cause
@@ -29,7 +38,7 @@ class BaseError(Exception):
             if (self.key is None) & hasattr(cause, 'status'):
                 self.key = cause.status
 
-        self.key = '0' if self.key is None else str(self.key)
+        self.key = '' if self.key is None else '%s: ' % str(self.key)
 
         if message is None:
             if hasattr(cause, 'msg'):
@@ -44,11 +53,11 @@ class BaseError(Exception):
         if self.sql is not None:
             if isinstance(self.params, list):
                 log_params = self.params[:5]
-                out_sql = "Error Sql: {}, params: {}\n".format(self.sql, ', \n'.join([str(param_tuple) for param_tuple in log_params]))
+                out_sql = 'Error Sql: {}, params: {}\n'.format(self.sql, ', \n'.join([str(param_tuple) for param_tuple in log_params]))
             else:
-                out_sql = "Error Sql: {}, params: {}".format(self.sql, self.params)
+                out_sql = 'Error Sql: {}, params: {}'.format(self.sql, self.params)
 
-        return '{}: \"{}\"\n{}'.format(self.key, self.message, out_sql)
+        return '{}\'{}\'\n{}'.format(self.key, self.message, out_sql)
 
 
 class DBError(BaseError):

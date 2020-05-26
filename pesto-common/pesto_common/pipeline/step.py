@@ -3,7 +3,7 @@
 from abc import abstractmethod, ABCMeta
 
 from pesto_common.log.logger_factory import LoggerFactory
-from pesto_orm.model import BaseModel
+from pesto_orm.core.model import Model
 
 logger = LoggerFactory.get_logger("pipeline.step")
 
@@ -12,7 +12,7 @@ class PipelineError(RuntimeError):
     pass
 
 
-class PipelineStepData(BaseModel):
+class PipelineStepData(Model):
     pass
 
 
