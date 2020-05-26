@@ -98,7 +98,6 @@ def transaction(rollback_exceptions=[]):
             new_kwargs = {'func': func, 'args': args, 'kwargs': kwargs}
 
             result = []
-            global mysqlExecutor
             try:
                 mysqlExecutor.begin_transaction()
                 handle(result, **new_kwargs)
