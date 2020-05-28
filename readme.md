@@ -79,7 +79,7 @@ build in python 3.6
 
 add dependencies in requirements(重要，必须要有，为什么项目的可以迁移好好管理依赖，放在项目root目录):
 ```text
-pesto-orm==0.0.1
+pesto-orm==0.0.4
 mysql-connector-python==8.0.11
 Flask==1.0.2
 ```
