@@ -242,7 +242,7 @@ curl -X POST \
   http://localhost:8080/examples \
   -H 'content-type: application/json' \
   -d '{
-	"title":"第三个测试"
+	"title":"第十个测试"
 }'
 
 # 根据id查询
@@ -261,4 +261,11 @@ curl -X PUT \
 curl -X DELETE \
   http://localhost:8080/examples/3
 
+```
+
+上传pypi包
+```python
+pip install twine
+python setup.py sdist bdist_wheel
+twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
 ```
