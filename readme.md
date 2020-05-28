@@ -46,12 +46,16 @@ def methodX():
 5、环境隔离的参数配置工具 config.ini, 公共参数放default，定制参数放在各自的环境
 ```python
 [default]
+a=x
 
 [dev]
 
 [test]
 
 [prod]
+
+#取值
+#Configer.get('param_name')
 ```
 
 6、等等
@@ -73,14 +77,14 @@ def methodX():
 pesto-example(flask + pesto-orm)
 build in python 3.6
 
-add dependencies in requirements(重要):
+add dependencies in requirements(重要，必须要有，为什么项目的可以迁移好好管理依赖，放在项目root目录):
 ```text
 pesto-orm==0.0.1
 mysql-connector-python==8.0.11
 Flask==1.0.2
 ```
 
-add config in config.ini(重要):
+add config in config.ini(重要，如果要使用配置，日志等依赖配置的组件，此文件需和requirements同级目录):
 ```ini
 [DEFAULT]
 app.key = pesto-orm
