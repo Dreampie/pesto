@@ -5,6 +5,15 @@ python下的极简orm框架，核心思想，领域对象+仓库
 
 地址：https://github.com/Dreampie/pesto
 
+依赖安装 requirements.txt
+
+```python
+
+pesto-common==0.0.4
+pesto-orm==0.0.4
+
+```
+
 1、特色
 ---
 
