@@ -24,6 +24,11 @@ class DateUtils(object):
             start = datetime.datetime.strptime("1970-01-01", "%Y-%m-%d")
         if end is None:
             end = datetime.datetime.now()
+        if isinstance(start, str):
+            start = datetime.datetime.strptime(start, "%Y-%m-%d")
+        if isinstance(end, str):
+            end = datetime.datetime.strptime(end, "%Y-%m-%d")
+
         day_count = (end - start).days
         dates = []
         if day_count > 0:
@@ -45,5 +50,6 @@ class DateUtils(object):
 
 
 if __name__ == '__main__':
-    dates = DateUtils.get_dates(start=datetime.datetime.strptime("2019-03-01", "%Y-%m-%d"), end=datetime.datetime.strptime("2019-03-02", "%Y-%m-%d"))
+    dates = DateUtils.get_dates(start=datetime.datetime.strptime("2019-03-01", "%Y-%m-%d"),
+                                end=datetime.datetime.strptime("2019-03-02", "%Y-%m-%d"))
     print(dates)

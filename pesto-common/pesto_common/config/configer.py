@@ -7,6 +7,8 @@ from configparser import ConfigParser, NoOptionError
 
 global root_path
 root_path = None
+global root_project
+root_project = None
 global default_config_path
 default_config_path = None
 
@@ -52,12 +54,14 @@ class Configer(object):
     @staticmethod
     def __init():
         global root_path
+        global root_project
         global default_config_path
-        if default_config_path is None or root_path is None:
+        if default_config_path is None or root_path is None or root_project is None:
             current_path = os.path.abspath(sys.path[0])
             Configer.__search_config(current_path)
             if default_config_path is None:
-                raise RuntimeError("if use this method, must init with `Configer.use_default(path)` before import class.")
+                raise RuntimeError(
+                    "if use this method, must init with `Configer.use_default(path)` before import class.")
 
     """
     get from default path
@@ -68,15 +72,17 @@ class Configer(object):
         Configer.__init()
 
         config_value = Configer.use(default_config_path).get(name, default_value)
-        config_value = Configer.__convert_value(config_value, root_path)
+        global root_path
+        global root_project
+        config_value = Configer.__convert_value(config_value, root_path, root_project)
         return config_value
 
     @staticmethod
-    def __convert_value(config_value, root_path):
+    def __convert_value(config_value, root_path, root_project):
         if config_value is not None:
 
             if isinstance(config_value, str) and config_value.startswith('$root'):
-                config_value = config_value.replace('$root', root_path)
+                config_value = config_value.replace('$root_project', root_project).replace('$root_path', root_path)
         return config_value
 
     @staticmethod
@@ -101,10 +107,12 @@ class Configer(object):
     @staticmethod
     def __search_config(current_path, level=1):
         global root_path
+        global root_project
         global default_config_path
         file_names = os.listdir(current_path)
         if 'requirements.txt' in file_names:
             root_path = current_path
+            root_project = os.path.basename(root_path)
 
             if default_config_path is None:
                 config_path = current_path + '/config.ini'

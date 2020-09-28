@@ -9,8 +9,8 @@ python下的极简orm框架，核心思想，领域对象+仓库
 
 ```python
 
-pesto-common==0.0.4
-pesto-orm==0.0.4
+pesto-common==0.0.5
+pesto-orm==0.0.5
 
 ```
 
@@ -84,11 +84,11 @@ a=x
 ---
 
 pesto-example(flask + pesto-orm)
-build in python 3.6
+build in python 3.7
 
 add dependencies in requirements(重要，必须要有，为什么项目的可以迁移好好管理依赖，放在项目root目录):
 ```text
-pesto-orm==0.0.4
+pesto-orm==0.0.5
 mysql-connector-python==8.0.11
 Flask==1.0.2
 ```
@@ -96,8 +96,8 @@ Flask==1.0.2
 add config in config.ini(重要，如果要使用配置，日志等依赖配置的组件，此文件需和requirements同级目录):
 ```ini
 [DEFAULT]
-app.key = pesto-orm
-log.path = /opt/logs/pesto-orm/pesto-orm.log
+app.key = $root_project
+log.path = $root_path/pesto-orm.log
 log.level = INFO
 ; db config 目前只支持mysql，欢迎提交其他数据库的实现
 db.database = example

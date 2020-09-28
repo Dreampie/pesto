@@ -1,4 +1,5 @@
 # -*- coding:utf8 -*-
+import csv
 import gzip
 import os
 import pickle
@@ -8,6 +9,20 @@ import tarfile
 class FileUtils(object):
     def __init__(self):
         pass
+
+    @staticmethod
+    def save_dict(data, file_path):
+        if len(data) > 0:
+            field_names = data[0].keys()
+            file_dir = os.path.dirname(file_path)
+            if not os.path.exists(file_dir):
+                os.makedirs(file_dir)
+
+            with open(file_path, 'w', newline='', encoding='utf-8-sig') as _f:
+                writer = csv.DictWriter(_f, fieldnames=field_names, dialect='excel')
+                writer.writeheader()
+                for row in data:
+                    writer.writerow(row)
 
     @staticmethod
     def clean_file(clean_file_path):
