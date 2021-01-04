@@ -316,7 +316,7 @@ class ExecutorFactory(object):
                 if 'password' in _db_config:
                     _db_config['password'] = '******'
                 logger.info(
-                    'Init mysql pool info -  db config: %s' % str(_db_config))
+                    'Init db pool info -  db config: %s' % str(_db_config))
                 target = db_config['target']
                 del db_config['target']
                 show_sql = db_config['show_sql']
