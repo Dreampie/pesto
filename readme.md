@@ -42,7 +42,7 @@ example = record_repository.query_by(where='`id` = %s', params=(1,))
 
 #如果你连领域模型都不想使用，完全基于repository操作 请使用 record的操作，不依赖封装结构
 record_repository = MysqlRecordRepository(table_name='example')
-#直接直接sql，返回的结构为dict，不会封装成class
+#直接执行sql，返回的结构为dict，不会封装成class
 example = record_repository.query_by(where='`id` = %s', params=(1,))
 
 ```
