@@ -9,8 +9,8 @@ python下的极简orm框架，核心思想，领域对象+仓库
 
 ```python
 
-pesto-common==0.0.5
-pesto-orm==0.0.5
+pesto-common==0.0.6
+pesto-orm==0.0.6
 
 ```
 
