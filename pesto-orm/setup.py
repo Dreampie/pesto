@@ -6,7 +6,7 @@ from setuptools import setup, find_packages
 requirements = ['pesto-common==0.0.6']
 
 setup(name='pesto-orm',
-      version='0.0.6',
+      version='0.0.7',
       author='Dreampie',
       author_email='Dreampie@outlook.com',
       url='https://github.com/Dreampie/pesto',

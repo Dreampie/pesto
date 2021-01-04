@@ -10,7 +10,7 @@ python下的极简orm框架，核心思想，领域对象+仓库
 ```python
 
 pesto-common==0.0.6
-pesto-orm==0.0.6
+pesto-orm==0.0.7
 
 ```
 
@@ -120,7 +120,7 @@ build in python 3.7
 
 add dependencies in requirements(重要，必须要有，为什么项目的可以迁移好好管理依赖，放在项目root目录):
 ```text
-pesto-orm==0.0.6
+pesto-orm==0.0.7
 mysql-connector-python==8.0.11
 Flask==1.0.2
 ```
