@@ -1,4 +1,4 @@
-from pesto_example.model.example import Example
+from model.example import Example
 from pesto_orm.dialect.mysql.domain import MysqlBaseRepository
 
 

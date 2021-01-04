@@ -2,8 +2,8 @@ import datetime
 
 from flask import Blueprint, jsonify, request
 
-from pesto_example.model.example import Example
-from pesto_example.repository.example import ExampleRepository
+from model.example import Example
+from repository.example import ExampleRepository
 
 app_example = Blueprint('example', __name__, url_prefix='/examples')
 
@@ -52,7 +52,7 @@ def delete(id):
     example.id = id
     example.deleted_at = datetime.datetime.now()
     # 根据id删除数据
-    example.delete()
+    result = example.delete() > 0
     return jsonify(result)
 
 
@@ -65,5 +65,5 @@ def update(id):
     example.id = id
     example.updated_at = datetime.datetime.now()
     # 根据id更新数据
-    example.update()
+    result = example.update() > 0
     return jsonify(result)

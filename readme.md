@@ -159,6 +159,23 @@ env=$ENV python ./pesto_example/main.py >> std_out.log 2>&1
 ```
 
 main 示例example，可以直接执行main方法启动(需先执行数据库的创建，以及配置数据的相关信息)
+make `pesto_example` as SourcesRoot
+
+创建数据库
+```sql
+create database example;
+use example;
+create table example(
+    id INT UNSIGNED AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    created_at DATETIME NOT NULL,
+    updated_at DATETIME NOT NULL,
+    deleted_at DATETIME NULL,
+    PRIMARY KEY(id)
+    )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+```
+
+启动入口
 ```python
 @app.route('/')
 def index():
@@ -259,20 +276,6 @@ def update(id):
     example.update()
     return jsonify(result)
 
-```
-
-创建数据库
-```sql
-create database example;
-
-create table example(
-    id INT UNSIGNED AUTO_INCREMENT,
-    title VARCHAR(255) NOT NULL,
-    created_at DATETIME NOT NULL,
-    updated_at DATETIME NOT NULL,
-    deleted_at DATETIME NOT NULL,
-    PRIMARY KEY(id)
-    )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 ```
 
 4、测试

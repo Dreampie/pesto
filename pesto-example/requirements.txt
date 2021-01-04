@@ -1,3 +1,3 @@
-pesto-orm==0.0.6
+pesto-orm==0.0.7
 mysql-connector-python==8.0.11
 Flask==1.0.2

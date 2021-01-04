@@ -5,7 +5,8 @@ import traceback
 from flask import Flask, jsonify
 
 from pesto_common.log.logger_factory import LoggerFactory
-from pesto_example.router.example import app_example
+
+from router.example import app_example
 
 logger = LoggerFactory.get_logger('main')
 
