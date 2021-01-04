@@ -26,13 +26,44 @@ class Example(MysqlBaseModel):
 #使用
 example= Example()
 ...
-example.save() #对象的增删改查 轻松实现
+example.save() #update delete query 基于领域对象id的增删改查 轻松实现
+```
+
+2、领域repository操作数据库
+```python
+#数据操作对象
+class ExampleRepository(MysqlBaseRepository):
+    def __init__(self):
+        super(ExampleRepository, self).__init__(Example)
+
+#创建操作对象，表信息直接来源于领域模型
+record_repository = ExampleRepository()
+example = record_repository.query_by(where='`id` = %s', params=(1,))
+
+#如果你连领域模型都不想使用，完全基于repository操作 请使用 record的操作，不依赖封装结构
+record_repository = MysqlRecordRepository(table_name='example')
+#直接直接sql，返回的结构为dict，不会封装成class
+example = record_repository.query_by(where='`id` = %s', params=(1,))
 
 ```
 
-2、超轻量级的配置初始化，只需要在 config.ini 配置对应的数据库信息，自动初始化连接，随时随地的执行sql
+3、超轻量级的配置初始化，只需要在 config.ini 配置对应的数据库信息，自动初始化连接，随时随地的执行sql
+```ini
+; db config 目前只支持mysql，欢迎提交其他数据库的实现
+db.database = example
+db.raise_on_warnings = True
+db.charset = utf8mb4
+db.show_sql = True
 
-3、简单实用的日志工具
+; profiles config for env
+[local]
+
+db.user = root
+db.password =
+db.host = 127.0.0.1
+db.port = 3306
+```
+4、简单实用的日志工具
 ```python
 # 配置 config.ini
 log.path = /opt/logs/pesto-orm/pesto-orm.log
@@ -40,10 +71,11 @@ log.level = INFO
 
 # 使用简单
 logger = LoggerFactory.get_logger('dialect.mysql.domain')
+logger.info('打印日志')
 
 ```
 
-4、支持数据库事务
+5、支持数据库事务
 ```python
 #一个注解告别，python下的事务烦恼
 @transaction()
@@ -52,7 +84,7 @@ def methodX():
 
 ```
 
-5、环境隔离的参数配置工具 config.ini, 公共参数放default，定制参数放在各自的环境
+6、环境隔离的参数配置工具 config.ini, 公共参数放default，定制参数放在各自的环境
 ```python
 [default]
 a=x
