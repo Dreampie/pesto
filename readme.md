@@ -99,7 +99,12 @@ a=x
 #Configer.get('param_name')
 ```
 
-6、等等
+run with env(default is local, dev, test, prod)
+```bash
+env=$ENV python ./xx/main.py >> std_out.log 2>&1
+```
+
+7、等等
 
 2、结构
 ---
