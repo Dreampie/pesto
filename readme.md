@@ -123,14 +123,14 @@ env=$ENV python ./xx/main.py >> std_out.log 2>&1
 pesto-example(flask + pesto-orm)
 build in python 3.7
 
-add dependencies in requirements(重要，必须要有，为什么项目的可以迁移好好管理依赖，放在项目root目录):
+add dependencies in requirements.txt(重要，必须要有，好好管理依赖才能利于项目长期配合，放在项目root目录):
 ```text
 pesto-orm==0.0.7
 mysql-connector-python==8.0.11
 Flask==1.0.2
 ```
 
-add config in config.ini(重要，如果要使用配置，日志等依赖配置的组件，此文件需和requirements同级目录):
+add config in config.ini(重要，如果要使用配置，日志等依赖配置的组件，此文件需和requirements.txt同级目录):
 ```ini
 [DEFAULT]
 app.key = $root_project
